@@ -1,18 +1,34 @@
 cmake_minimum_required(VERSION 3.20)
-project(gravity-simulator C)
+project(gravity-simulator CXX)
 
 set(CMAKE_C_STANDARD 11)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_COMPILER "emcc")
+set(CMAKE_CXX_COMPILER "emcc")
 
 # Force Emscripten toolchain when building
 if (EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")   #builds .html + .js + .wasm
 endif()
 
-add_executable(gravity-simulator src/main.c)
+add_executable(gravity-simulator
+    src/main.cpp
+    src/imgui/imgui.cpp
+    src/imgui/imgui_demo.cpp
+    src/imgui/imgui_draw.cpp
+    src/imgui/imgui_tables.cpp
+    src/imgui/imgui_widgets.cpp
+)
+
+set(SOURCES
+    src/main.cpp
+    src/imgui/imgui.cpp
+    src/imgui/imgui_demo.cpp
+    src/imgui/imgui_draw.cpp
+    src/imgui/imgui_tables.cpp
+    src/imgui/imgui_widgets.cpp
+)
 
 if (EMSCRIPTEN)
     # Common Emscripten settings for WebGL + filesystem
