@@ -1,6 +1,6 @@
-# gravity-simulator
+# coin3d
 
-2D gravity simulator written in C++. I'd go for bare C but ImGui uses C++ :(
+3D spinning coin rendered on the GPU using sokol with WebGL, running with WASM.
 
 ```bash
 emcmake cmake -S . -B build

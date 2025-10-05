@@ -11301,7 +11301,7 @@ _SOKOL_PRIVATE bool _sapp_x11_make_custom_mouse_cursor(sapp_mouse_cursor cursor,
     img->yhot = (XcursorDim) desc->cursor_hotspot_y;
     const size_t dest_num_bytes = (size_t)(img->width * img->height) * sizeof(XcursorPixel);
     SOKOL_ASSERT(dest_num_bytes == desc->pixels.size);
-    // Copy RGBA -> BGRA
+    // Copy RGBA -> BGRA
     for (size_t i = 0; i < dest_num_bytes; i += 4) {
         ((uint8_t*) img->pixels)[i+0] = ((uint8_t*) desc->pixels.ptr)[i+2];
         ((uint8_t*) img->pixels)[i+1] = ((uint8_t*) desc->pixels.ptr)[i+1];
