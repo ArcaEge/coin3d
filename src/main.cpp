@@ -138,49 +138,79 @@ static void frame(void) {
     colour2.b = 1.0f;
     colour2.a = 1.0f;
 
-    colour_t colour3{};
-    colour3.r = 1.0f;
-    colour3.g = 1.0f;
-    colour3.b = 1.0f;
-    colour3.a = 1.0f;
+    colour_t red{
+        .r = 1.0f,
+        .g = 0.2f,
+        .b = 0.0f,
+        .a = 1.0f,
+    };
 
-    colour_t colour4{};
-    colour4.r = 1.0f;
-    colour4.g = 1.0f;
-    colour4.b = 0.0f;
-    colour4.a = 1.0f;
+    colour_t orange{
+        .r = 1.0f,
+        .g = 0.5f,
+        .b = 0.0f,
+        .a = 1.0f,
+    };
 
-    triangle_t triangle1;
-    triangle1[0].x = 0.5f;
-    triangle1[0].y = 0.5f;
-    triangle1[0].z = -0.5f;
-    triangle1[0].colour = colour2;
-    triangle1[1].x = -0.3f;
-    triangle1[1].y = -0.3f;
-    triangle1[1].z = -0.5f;
-    triangle1[1].colour = colour1;
-    triangle1[2].x = 0.5f;
-    triangle1[2].y = -0.3f;
-    triangle1[2].z = 0.0f;
-    triangle1[2].colour = colour2;
-    draw_triangle(triangle1);
+    colour_t yellow{
+        .r = 1.0f,
+        .g = 1.0f,
+        .b = 0.0f,
+        .a = 1.0f,
+    };
 
-    triangle_t triangle2;
-    triangle2[0].x = -0.3f;
-    triangle2[0].y = 0.5f;
-    triangle2[0].z = 0.5f;
-    triangle2[0].colour = colour3;
-    triangle2[1].x = 0.5f;
-    triangle2[1].y = -0.3f;
-    triangle2[1].z = 1.0f;
-    triangle2[1].colour = colour4;
-    triangle2[2].x = -0.3f;
-    triangle2[2].y = -0.3f;
-    triangle2[2].z = 0.5f;
-    triangle2[2].colour = colour3;
-    draw_triangle(triangle2);
+    colour_t orange_yellow{
+        .r = 1.0f,
+        .g = 0.75f,
+        .b = 0.0f,
+        .a = 1.0f,
+    };
+
+    colour_t orange_yellow2{
+        .r = 1.0f,
+        .g = 0.9f,
+        .b = 0.0f,
+        .a = 1.0f,
+    };
+
+    colour_t orange_yellow3{
+        .r = 1.0f,
+        .g = 0.65f,
+        .b = 0.0f,
+        .a = 1.0f,
+    };
+
+    // triangle_t triangle1;
+    // triangle1[0].x = 0.5f;
+    // triangle1[0].y = 0.5f;
+    // triangle1[0].z = -0.5f;
+    // triangle1[0].colour = colour2;
+    // triangle1[1].x = -0.3f;
+    // triangle1[1].y = -0.3f;
+    // triangle1[1].z = -0.5f;
+    // triangle1[1].colour = colour1;
+    // triangle1[2].x = 0.5f;
+    // triangle1[2].y = -0.3f;
+    // triangle1[2].z = 0.0f;
+    // triangle1[2].colour = colour2;
+    // draw_triangle(triangle1);
+
+    // triangle_t triangle2;
+    // triangle2[0].x = -0.3f;
+    // triangle2[0].y = 0.5f;
+    // triangle2[0].z = 0.5f;
+    // triangle2[0].colour = colour3;
+    // triangle2[1].x = 0.5f;
+    // triangle2[1].y = -0.3f;
+    // triangle2[1].z = 1.0f;
+    // triangle2[1].colour = colour4;
+    // triangle2[2].x = -0.3f;
+    // triangle2[2].y = -0.3f;
+    // triangle2[2].z = 0.5f;
+    // triangle2[2].colour = colour3;
+    // draw_triangle(triangle2);
     
-    draw_filled_circle(0, 0, 0.1f, 0.5f, colour4, colour1, 128);
+    draw_cylinder(0, 0, 0.0f, 0.5f, 0.18f, orange_yellow2, orange_yellow, orange_yellow2, orange_yellow3, 96);
 
     sg_range range{};
     range.ptr = triangles;

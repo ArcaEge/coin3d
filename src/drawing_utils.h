@@ -66,3 +66,117 @@ void draw_filled_circle(float x, float y, float z, float r, colour_t centre_colo
         previous_y = vertex_y;
     }
 }
+
+/// @brief Draws a cylinder
+/// @param x x-coordinate of the origin
+/// @param y y-coordinate of the origin
+/// @param z z-coordinate of the origin
+/// @param t thickness
+/// @param r radius
+/// @param centre_colour colour of the circle's centre
+/// @param outer_colour colour of the circle's edges
+/// @param side_colour1 colour of the cylinder's sides
+/// @param side_colour2 colour of the cylinder's sides (set this different to side_colour1 for a stripe effect)
+/// @param resolution resolution of the circle, higher value = better result
+void draw_cylinder(float x, float y, float z, float r, float t, colour_t centre_colour, colour_t outer_colour, colour_t side_colour1, colour_t side_colour2, int resolution) {
+    float previous_x = x;
+    float previous_y = y + r;
+
+    for (int i = 1; i <= resolution; i++) {
+        float angle = ((2.0f * M_PI) / resolution) * i;
+
+        float vertex_x = sinf(angle) * r + x;
+        float vertex_y = cosf(angle) * r + y;
+
+        triangle_t triangle1{
+            [0] = {
+                .x = x,
+                .y = y,
+                .z = z - (t / 2.0f),
+                .colour = centre_colour,
+            },
+            [1] = {
+                .x = previous_x,
+                .y = previous_y,
+                .z = z - (t / 2.0f),
+                .colour = outer_colour,
+            },
+            [2] = {
+                .x = vertex_x,
+                .y = vertex_y,
+                .z = z - (t / 2.0f),
+                .colour = outer_colour,
+            },
+        };
+        draw_triangle(triangle1);
+
+        triangle_t triangle2{
+            [0] = {
+                .x = x,
+                .y = y,
+                .z = z + (t / 2.0f),
+                .colour = centre_colour,
+            },
+            [1] = {
+                .x = previous_x,
+                .y = previous_y,
+                .z = z + (t / 2.0f),
+                .colour = outer_colour,
+            },
+            [2] = {
+                .x = vertex_x,
+                .y = vertex_y,
+                .z = z + (t / 2.0f),
+                .colour = outer_colour,
+            },
+        };
+        draw_triangle(triangle2);
+
+        triangle_t triangle3{
+            [0] = {
+                .x = vertex_x,
+                .y = vertex_y,
+                .z = z + (t / 2.0f),
+                .colour = side_colour1,
+            },
+            [1] = {
+                .x = previous_x,
+                .y = previous_y,
+                .z = z - (t / 2.0f),
+                .colour = side_colour1,
+            },
+            [2] = {
+                .x = vertex_x,
+                .y = vertex_y,
+                .z = z - (t / 2.0f),
+                .colour = side_colour1,
+            },
+        };
+        draw_triangle(triangle3);
+
+        triangle_t triangle4{
+            [0] = {
+                .x = previous_x,
+                .y = previous_y,
+                .z = z - (t / 2.0f),
+                .colour = side_colour2,
+            },
+            [1] = {
+                .x = previous_x,
+                .y = previous_y,
+                .z = z + (t / 2.0f),
+                .colour = side_colour2,
+            },
+            [2] = {
+                .x = vertex_x,
+                .y = vertex_y,
+                .z = z + (t / 2.0f),
+                .colour = side_colour2,
+            },
+        };
+        draw_triangle(triangle4);
+
+        previous_x = vertex_x;
+        previous_y = vertex_y;
+    }
+}
