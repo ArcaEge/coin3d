@@ -1,18 +1,21 @@
 #include "defs.h"
 #include "drawing_utils.h"
 
+#include <cmath>
+
 #define VECMATH_GENERICS
 #include "vecmath.h"
 
-// using namespace vecmath;
-
-// #include "imgui/imgui.h"
-// #include "sokol/sokol_imgui.h"
+#include "imgui/imgui.h"
+#define SOKOL_IMGUI_IMPL
+#include "sokol/sokol_imgui.h"
 
 // TODO: Implement index buffers
 
 sg_pipeline pipeline;
 sg_buffer vertex_buffer{};
+
+uint64_t last_time;
 
 // From https://github.com/floooh/sokol-samples/blob/master/html5/cube-emsc.c
 // Calculates a single vector that maps the object space to screen space
@@ -25,7 +28,7 @@ static vecmath::mat44_t compute_mvp(float rx, float ry, float rz, int width, int
     vecmath::mat44_t rym = vecmath::mat44_rotation_y(vecmath::vm_radians(ry));
     vecmath::mat44_t rzm = vecmath::mat44_rotation_z(vecmath::vm_radians(rz));
 
-    vecmath::mat44_t model = vm_mul(rzm, vm_mul(rym, rxm));  // Z * X * Y
+    vecmath::mat44_t model = vm_mul(rxm, vm_mul(rym, rzm));  // X * Y * Z
     return vm_mul(model, view_proj);
 }
 
@@ -34,7 +37,10 @@ typedef struct {
 } vs_params_t;
 
 static struct {
-    float rx, ry, rz;
+    // Rotation
+    float rx = 0.0f, ry = 0.0f, rz = 0.0f;
+    // Rotation speed
+    float rsx = 0.0f, rsy = 100.0f, rsz = 0.0f;
 } state;
 
 // Called when the application is initializing.
@@ -49,6 +55,13 @@ static void init(void) {
         fprintf(stderr, "Failed to create Sokol GFX context!\n");
         exit(-1);
     }
+
+    simgui_desc_t simgui_desc{
+        .logger.func = slog_func,
+    };
+    simgui_setup(&simgui_desc);
+
+    stm_setup();
 
     // Create vertex buffer
     sg_buffer_usage vertex_buf_usage{};
@@ -114,13 +127,55 @@ static void init(void) {
         // .cull_mode = SG_CULLMODE_BACK,
     };
     pipeline = sg_make_pipeline(&pipeline_desc);
+
+    last_time = stm_now();
+
+    printf("Finished initialisation\n");
 }
 
-// Called on every frame of the application.
+// Called on every frame of the application
 static void frame(void) {
-    // Get current window size.
+    // Time stuff
+    uint64_t now = stm_now();
+    double timediff = stm_sec(stm_diff(now, last_time));
+    last_time = now;
+
+    // Get current window size
     int width = sapp_width(), height = sapp_height();
     float ratio = width / (float)height;
+
+    simgui_new_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
+
+    ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(350,280), ImGuiCond_FirstUseEver);
+
+    ImGui::Begin("Properties");
+
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::Text("w: %d, h: %d, dpi_scale: %.1f", sapp_width(), sapp_height(), sapp_dpi_scale());
+    if (ImGui::Button(sapp_is_fullscreen() ? "Switch to windowed" : "Switch to fullscreen")) {
+        sapp_toggle_fullscreen();
+    }
+    
+    ImGui::SeparatorText("Rotation speeds");
+    ImGui::SliderFloat("X##x", &state.rsx, 0.0f, 1000.0f);
+    ImGui::SliderFloat("Y##x", &state.rsy, 0.0f, 1000.0f);
+    ImGui::SliderFloat("Z##x", &state.rsz, 0.0f, 1000.0f);
+    
+    ImGui::SeparatorText("Rotation");
+    ImGui::SliderFloat("X", &state.rx, 0.0f, 360.0f);
+    ImGui::SliderFloat("Y", &state.ry, 0.0f, 360.0f);
+    ImGui::SliderFloat("Z", &state.rz, 0.0f, 360.0f);
+
+    state.rx += timediff * state.rsx;
+    state.ry += timediff * state.rsy;
+    state.rz += timediff * state.rsz;
+
+    state.rx = fmod(state.rx, 360.0f);
+    state.ry = fmod(state.ry, 360.0f);
+    state.rz = fmod(state.rz, 360.0f);
+
+    ImGui::End();
 
     triangles_used = 0;
 
@@ -179,36 +234,6 @@ static void frame(void) {
         .b = 0.0f,
         .a = 1.0f,
     };
-
-    // triangle_t triangle1;
-    // triangle1[0].x = 0.5f;
-    // triangle1[0].y = 0.5f;
-    // triangle1[0].z = -0.5f;
-    // triangle1[0].colour = colour2;
-    // triangle1[1].x = -0.3f;
-    // triangle1[1].y = -0.3f;
-    // triangle1[1].z = -0.5f;
-    // triangle1[1].colour = colour1;
-    // triangle1[2].x = 0.5f;
-    // triangle1[2].y = -0.3f;
-    // triangle1[2].z = 0.0f;
-    // triangle1[2].colour = colour2;
-    // draw_triangle(triangle1);
-
-    // triangle_t triangle2;
-    // triangle2[0].x = -0.3f;
-    // triangle2[0].y = 0.5f;
-    // triangle2[0].z = 0.5f;
-    // triangle2[0].colour = colour3;
-    // triangle2[1].x = 0.5f;
-    // triangle2[1].y = -0.3f;
-    // triangle2[1].z = 1.0f;
-    // triangle2[1].colour = colour4;
-    // triangle2[2].x = -0.3f;
-    // triangle2[2].y = -0.3f;
-    // triangle2[2].z = 0.5f;
-    // triangle2[2].colour = colour3;
-    // draw_triangle(triangle2);
     
     draw_cylinder(0, 0, 0.0f, 0.5f, 0.18f, orange_yellow2, orange_yellow, orange_yellow2, orange_yellow3, 96);
 
@@ -218,7 +243,6 @@ static void frame(void) {
 
     sg_update_buffer(vertex_buffer, range);
 
-    state.ry += 1.0f;
     const vs_params_t vs_params = {.mvp = compute_mvp(state.rx, state.ry, state.rz, width, height)};
     
     // Begin pass
@@ -240,7 +264,8 @@ static void frame(void) {
 
     sg_apply_uniforms(0, SG_RANGE(vs_params));
     sg_draw(0, 3 * triangles_used, 1);
-
+    
+    simgui_render();
     // End render pass.
     sg_end_pass();
     // Commit Sokol render.
@@ -249,7 +274,12 @@ static void frame(void) {
 
 // Called when the application is shutting down.
 static void cleanup(void) {
+    simgui_shutdown();
     sg_shutdown();
+}
+
+static void input(const sapp_event* event) {
+    simgui_handle_event(event);
 }
 
 // Implement application main through Sokol APP.
@@ -257,17 +287,19 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
 
-    sapp_desc desc{};
-
-    desc.init_cb = init;
-    desc.frame_cb = frame;
-    desc.cleanup_cb = cleanup;
-    desc.window_title = "3D coin";
-    desc.logger.func = slog_func;
-    desc.html5_canvas_resize = true;
-    desc.high_dpi = true;
-    desc.width = 1280;
-    desc.height = 720;
+    sapp_desc desc{
+        .init_cb = init,
+        .frame_cb = frame,
+        .event_cb = input,
+        .cleanup_cb = cleanup,
+        .window_title = "3D coin",
+        .logger.func = slog_func,
+        .high_dpi = true,
+        .width = 1280,
+        .height = 720,
+        .icon.sokol_default = true,
+        .enable_clipboard = true,
+    };
 
     return desc;
 }

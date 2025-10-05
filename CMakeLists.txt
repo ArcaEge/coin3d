@@ -14,26 +14,26 @@ endif()
 
 add_executable(coin3d
     src/main.cpp
-    # src/imgui/imgui.cpp
-    # src/imgui/imgui_demo.cpp
-    # src/imgui/imgui_draw.cpp
-    # src/imgui/imgui_tables.cpp
-    # src/imgui/imgui_widgets.cpp
+    src/imgui/imgui.cpp
+    src/imgui/imgui_demo.cpp
+    src/imgui/imgui_draw.cpp
+    src/imgui/imgui_tables.cpp
+    src/imgui/imgui_widgets.cpp
 )
 
 set(SOURCES
     src/main.cpp
-    # src/imgui/imgui.cpp
-    # src/imgui/imgui_demo.cpp
-    # src/imgui/imgui_draw.cpp
-    # src/imgui/imgui_tables.cpp
-    # src/imgui/imgui_widgets.cpp
+    src/imgui/imgui.cpp
+    src/imgui/imgui_demo.cpp
+    src/imgui/imgui_draw.cpp
+    src/imgui/imgui_tables.cpp
+    src/imgui/imgui_widgets.cpp
 )
 
 if (EMSCRIPTEN)
     # Common Emscripten settings for WebGL + filesystem
     set_target_properties(coin3d PROPERTIES
-        LINK_FLAGS "-s USE_WEBGL2=1 -s FULL_ES3=1 -s WASM=1 -s ASYNCIFY"
+        LINK_FLAGS "-s USE_WEBGL2=1 -s FULL_ES3=1 -s WASM=1 -s ASYNCIFY --shell-file ${CMAKE_SOURCE_DIR}/template.html"
     )
 
     add_custom_target(run

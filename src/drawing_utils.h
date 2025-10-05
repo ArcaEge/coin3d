@@ -16,15 +16,6 @@ void draw_triangle(triangle_t triangle) {
     triangles_used += 1;
 }
 
-/// @brief Draws a circle outline
-/// @param x x-coordinate of the origin
-/// @param y y-coordinate of the origin
-/// @param r inner radius
-/// @param t outline thickness
-/// @param resolution resolution of the circle, higher value = better result
-void draw_circle_outline(float x, float y, float r, float t, int resolution) {
-}
-
 /// @brief Draws a filled circle
 /// @param x x-coordinate of the origin
 /// @param y y-coordinate of the origin

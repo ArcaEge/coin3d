@@ -7,6 +7,10 @@
 #include "sokol/sokol_gfx.h"
 #include "sokol/sokol_glue.h"
 #include "sokol/sokol_log.h"
+#define SOKOL_TIME_IMPL
+#endif
+
+#ifndef SOKOL_TIME
 #include "sokol/sokol_time.h"
 #endif
 
