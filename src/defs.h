@@ -26,5 +26,5 @@ struct vertex_t {
 typedef vertex_t triangle_t[3];
 
 // 1K triangle buffer
-triangle_t triangles[TRIANGLE_ARRAY_LEN];
-uint16_t triangles_used = 0;
+static triangle_t triangles[TRIANGLE_ARRAY_LEN];
+static uint16_t triangles_used = 0;

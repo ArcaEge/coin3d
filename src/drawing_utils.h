@@ -28,13 +28,15 @@ void draw_circle_outline(float x, float y, float r, float t, int resolution) {
 /// @brief Draws a filled circle
 /// @param x x-coordinate of the origin
 /// @param y y-coordinate of the origin
+/// @param z z-coordinate of the origin
 /// @param r radius
 /// @param centre_colour colour of the circle's centre
 /// @param outer_colour colour of the circle's edges
 /// @param resolution resolution of the circle, higher value = better result
-void draw_filled_circle(float x, float y, float r, colour_t centre_colour, colour_t outer_colour, int resolution) {
+void draw_filled_circle(float x, float y, float z, float r, colour_t centre_colour, colour_t outer_colour, int resolution) {
     float previous_x = x;
     float previous_y = y + r;
+
     for (int i = 1; i <= resolution; i++) {
         float angle = ((2.0f * M_PI) / resolution) * i;
 
@@ -46,12 +48,15 @@ void draw_filled_circle(float x, float y, float r, colour_t centre_colour, colou
 
         triangle[0].x = x;
         triangle[0].y = y;
+        triangle[0].z = z;
         triangle[0].colour = centre_colour;
         triangle[1].x = previous_x;
         triangle[1].y = previous_y;
+        triangle[1].z = z;
         triangle[1].colour = outer_colour;
         triangle[2].x = vertex_x;
         triangle[2].y = vertex_y;
+        triangle[2].z = z;
         triangle[2].colour = outer_colour;
 
         draw_triangle(triangle);

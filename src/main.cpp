@@ -1,6 +1,11 @@
 #include "defs.h"
 #include "drawing_utils.h"
 
+#define VECMATH_GENERICS
+#include "vecmath.h"
+
+// using namespace vecmath;
+
 // #include "imgui/imgui.h"
 // #include "sokol/sokol_imgui.h"
 
@@ -8,6 +13,29 @@
 
 sg_pipeline pipeline;
 sg_buffer vertex_buffer{};
+
+// From https://github.com/floooh/sokol-samples/blob/master/html5/cube-emsc.c
+// Calculates a single vector that maps the object space to screen space
+static vecmath::mat44_t compute_mvp(float rx, float ry, float rz, int width, int height) {
+    vecmath::mat44_t proj = vecmath::mat44_perspective_fov_rh(vecmath::vm_radians(30.0f), (float)width / (float)height, 0.01f, 10.0f);
+    vecmath::mat44_t view = vecmath::mat44_look_at_rh(vecmath::vec3(0.0f, 1.5f, 4.0f), vecmath::vec3(0.0f, 0.0f, 0.0f), vecmath::vec3(0.0f, 1.0f, 0.0f));
+    vecmath::mat44_t view_proj = vm_mul(view, proj);
+
+    vecmath::mat44_t rxm = vecmath::mat44_rotation_x(vecmath::vm_radians(rx));
+    vecmath::mat44_t rym = vecmath::mat44_rotation_y(vecmath::vm_radians(ry));
+    vecmath::mat44_t rzm = vecmath::mat44_rotation_z(vecmath::vm_radians(rz));
+
+    vecmath::mat44_t model = vm_mul(rzm, vm_mul(rym, rxm));  // Z * X * Y
+    return vm_mul(model, view_proj);
+}
+
+typedef struct {
+    vecmath::mat44_t mvp;
+} vs_params_t;
+
+static struct {
+    float rx, ry, rz;
+} state;
 
 // Called when the application is initializing.
 static void init(void) {
@@ -33,39 +61,57 @@ static void init(void) {
     vertex_buffer = sg_make_buffer(&vertex_buf_desc);
 
     // Create shader
-    sg_shader_desc shader_desc{};
-    shader_desc.attrs[0].glsl_name = "position";
-    shader_desc.attrs[1].glsl_name = "color0";
-    shader_desc.vertex_func.source = R"(#version 300 es
-    precision mediump float;
+    sg_shader_desc shader_desc{
+        .attrs[0].glsl_name = "position",
+        .attrs[1].glsl_name = "color0",
+        .vertex_func.source = R"(#version 300 es
+            uniform mat4 mvp;
+            in vec4 position;
+            in vec4 color0;
+            out vec4 fragment_color;
 
-    in vec3 position;
-    in vec4 color0;
-    out vec4 fragment_color;
+            void main() {
+                fragment_color = color0;
+                gl_Position = mvp * position;
+            }
+            )",
+        .vertex_func.entry = "main",
+        .fragment_func.source = R"(#version 300 es
+            precision mediump float;
 
-    void main() {
-        fragment_color = color0;
-        gl_Position = vec4(position, 1.0);
-    }
-    )";
-    shader_desc.vertex_func.entry = "main";
-    shader_desc.fragment_func.source = R"(#version 300 es
-    precision mediump float;
+            in vec4 fragment_color;
+            out vec4 color;
 
-    in vec4 fragment_color;
-    out vec4 color;
-
-    void main() {
-        color = fragment_color;
-    }
-    )";
-    shader_desc.fragment_func.entry = "main";
+            void main() {
+                color = fragment_color;
+            }
+            )",
+        .fragment_func.entry = "main",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .glsl_uniforms = {
+                [0] = {
+                    .glsl_name = "mvp",
+                    .type = SG_UNIFORMTYPE_MAT4,
+                },
+            },
+        },
+    };
 
     sg_pipeline_desc pipeline_desc{
+        .layout = {
+            .buffers[0].stride = sizeof(vertex_t),
+            .attrs[0].format = SG_VERTEXFORMAT_FLOAT3,
+            .attrs[1].format = SG_VERTEXFORMAT_FLOAT4,
+        },
         .shader = sg_make_shader(&shader_desc),
-        .layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT3,
-        .layout.attrs[1].format = SG_VERTEXFORMAT_FLOAT4,
-        .primitive_type = SG_PRIMITIVETYPE_TRIANGLES,   // SG_PRIMITIVETYPE_TRIANGLES, use SG_PRIMITIVETYPE_LINE_STRIP for wireframeish rendering
+        .primitive_type = SG_PRIMITIVETYPE_TRIANGLES,  // SG_PRIMITIVETYPE_TRIANGLES, use SG_PRIMITIVETYPE_LINE_STRIP for wireframeish rendering
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
+        },
+        // .cull_mode = SG_CULLMODE_BACK,
     };
     pipeline = sg_make_pipeline(&pipeline_desc);
 }
@@ -76,26 +122,10 @@ static void frame(void) {
     int width = sapp_width(), height = sapp_height();
     float ratio = width / (float)height;
 
-    // triangles[0][0].x = -0.1f;
-    // triangles[0][0].y = 0.0f;
-    // triangles[0][0].colour.r = 0.0f;
-    // triangles[0][0].colour.g = 1.0f;
-    // triangles[0][0].colour.b = 1.0f;
-    // triangles[0][0].colour.a = 0.0f;
+    triangles_used = 0;
 
-    // triangles[0][1].x = 0.5f;
-    // triangles[0][1].y = 0.0f;
-    // triangles[0][1].colour.r = 0.0f;
-    // triangles[0][1].colour.g = 0.0f;
-    // triangles[0][1].colour.b = 1.0f;
-    // triangles[0][1].colour.a = 0.0f;
+    // Drawing stuff goes here
 
-    // triangles[0][2].x = 0.0f;
-    // triangles[0][2].y = 0.5f;
-    // triangles[0][2].colour.r = 0.0f;
-    // triangles[0][2].colour.g = 1.0f;
-    // triangles[0][2].colour.b = 1.0f;
-    // triangles[0][2].colour.a = 0.0f;
     colour_t colour1{};
     colour1.r = 0.0f;
     colour1.g = 1.0f;
@@ -108,7 +138,49 @@ static void frame(void) {
     colour2.b = 1.0f;
     colour2.a = 1.0f;
 
-    draw_filled_circle(0, 0, 0.5f, colour1, colour2, 128);
+    colour_t colour3{};
+    colour3.r = 1.0f;
+    colour3.g = 1.0f;
+    colour3.b = 1.0f;
+    colour3.a = 1.0f;
+
+    colour_t colour4{};
+    colour4.r = 1.0f;
+    colour4.g = 1.0f;
+    colour4.b = 0.0f;
+    colour4.a = 1.0f;
+
+    triangle_t triangle1;
+    triangle1[0].x = 0.5f;
+    triangle1[0].y = 0.5f;
+    triangle1[0].z = -0.5f;
+    triangle1[0].colour = colour2;
+    triangle1[1].x = -0.3f;
+    triangle1[1].y = -0.3f;
+    triangle1[1].z = -0.5f;
+    triangle1[1].colour = colour1;
+    triangle1[2].x = 0.5f;
+    triangle1[2].y = -0.3f;
+    triangle1[2].z = 0.0f;
+    triangle1[2].colour = colour2;
+    draw_triangle(triangle1);
+
+    triangle_t triangle2;
+    triangle2[0].x = -0.3f;
+    triangle2[0].y = 0.5f;
+    triangle2[0].z = 0.5f;
+    triangle2[0].colour = colour3;
+    triangle2[1].x = 0.5f;
+    triangle2[1].y = -0.3f;
+    triangle2[1].z = 1.0f;
+    triangle2[1].colour = colour4;
+    triangle2[2].x = -0.3f;
+    triangle2[2].y = -0.3f;
+    triangle2[2].z = 0.5f;
+    triangle2[2].colour = colour3;
+    draw_triangle(triangle2);
+    
+    draw_filled_circle(0, 0, 0.1f, 0.5f, colour4, colour1, 128);
 
     sg_range range{};
     range.ptr = triangles;
@@ -116,6 +188,9 @@ static void frame(void) {
 
     sg_update_buffer(vertex_buffer, range);
 
+    state.ry += 1.0f;
+    const vs_params_t vs_params = {.mvp = compute_mvp(state.rx, state.ry, state.rz, width, height)};
+    
     // Begin pass
     sg_pass_action pass_action{};
     pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
@@ -133,34 +208,9 @@ static void frame(void) {
     *bindings.vertex_buffers = vertex_buffer;
     sg_apply_bindings(&bindings);
 
+    sg_apply_uniforms(0, SG_RANGE(vs_params));
     sg_draw(0, 3 * triangles_used, 1);
 
-    // // Begin recording draw commands for a frame buffer of size (width, height).
-    // sgp_begin(width, height);
-    // // Set frame buffer drawing region to (0,0,width,height).
-    // sgp_viewport(0, 0, width, height);
-    // // Set drawing coordinate space to (left=-ratio, right=ratio, top=1, bottom=-1).
-    // sgp_project(-ratio, ratio, 1.0f, -1.0f);
-
-    // // Clear the frame buffer.
-    // sgp_set_color(0.1f, 0.1f, 0.1f, 1.0f);
-    // sgp_clear();
-
-    // // Draw an animated rectangle that rotates and changes its colors.
-    // float time = sapp_frame_count() * sapp_frame_duration();
-    // float r = sinf(time) * 0.5 + 0.5, g = cosf(time) * 0.5 + 0.5;
-    // sgp_set_color(r, g, 0.8f, 1.0f);
-    // // sgp_draw_filled_rect(-0.5f, -0.5f, 1.0f, 1.0f);
-    // sgp_draw_point(0, 0);
-    // // sgp_rotate_at(time, 0.0f, 0.0f);
-
-    // // Begin a render pass.
-    // sg_pass pass = {.swapchain = sglue_swapchain()};
-    // sg_begin_pass(&pass);
-    // // Dispatch all draw commands to Sokol GFX.
-    // sgp_flush();
-    // // Finish a draw command queue, clearing it.
-    // sgp_end();
     // End render pass.
     sg_end_pass();
     // Commit Sokol render.
@@ -186,7 +236,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.logger.func = slog_func;
     desc.html5_canvas_resize = true;
     desc.high_dpi = true;
-    desc.width = 720;
+    desc.width = 1280;
     desc.height = 720;
 
     return desc;
